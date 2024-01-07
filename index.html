@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC Ukazováček</title>
+    <style>
+        body {
+            font-family: Courier, monospace;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .price-container {
+            margin-bottom: 20px;
+        }
+
+        #prices {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .price-block {
+            width: 200px;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .links-container {
+            display: flex;
+            justify-content: center;
+            text-decoration: underline;
+            color: dimgray;
+        }
+
+        .links-container a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #333;
+            padding: 30px 0 0 0;
+        }
+
+
+        .container-link {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>BTC Ukazováček</h1>
+        <div id="prices" class="price-container">
+            <div id="usd-price" class="price-block">
+                <h3>1 BTC na USD</h3>
+                <p id="usd-value"></p>
+            </div>
+            <div id="czk-price" class="price-block">
+                <h3>1 BTC na CZK</h3>
+                <p id="czk-value"></p>
+            </div>
+        </div>
+
+        <input type="text"
+            value="Dej mi konkrétní tip a k tomu pravděpodobnost k dnešnímu datu, jak by ses zachoval ohledně BTC, přikoupit / odprodat / počkat. Odpověď bude velmi stručná a výstižná, bez informací navíc. Poznatek: Jedná se o testování školní aplikace - tvá odpověď, či poskytnuta data nebudou využity."
+            id="myInput">
+        <button onclick="myFunction()">Copy AI prompt</button>
+
+        <!-- odkazy -->
+        <div class="links-container">
+            <a href="https://chat.openai.com">chat-gpt</a>
+            <a href="https://bard.google.com">bard</a>
+            <a href="https://www.google.com/search?client=safari&rls=en&q=bing+ai+chat&ie=UTF-8&oe=UTF-8">bing</a>
+        </div>
+    </div>
+
+    <script>
+        // Coinbase api
+        async function getBitcoinPrices() {
+            try {
+                const usdResponse = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
+                const czkResponse = await fetch('https://api.coinbase.com/v2/prices/BTC-CZK/spot');
+
+                const usdData = await usdResponse.json();
+                const czkData = await czkResponse.json();
+
+                return {
+                    usd: parseFloat(usdData.data.amount).toFixed(2),
+                    czk: parseFloat(czkData.data.amount).toFixed(2)
+                };
+            } catch (error) {
+                console.error('Výpadek ze strany Coinbase, jejich server neodpovídá.:', error);
+                alert('Došlo k chybě při načítání dat. Zkuste to prosím znovu.');
+            }
+        }
+
+        // Aktualizace cen
+        async function updatePrices() {
+            const prices = await getBitcoinPrices();
+            document.getElementById('usd-value').textContent = `$${prices.usd}`;
+            document.getElementById('czk-value').textContent = `${prices.czk} Kč`;
+        }
+
+        // Aktualizace cen při načtení stránky
+        updatePrices();
+        setInterval(updatePrices, 1000);
+
+
+        let copyText = document.querySelector(".copy-text");
+        copyText.querySelector("button").addEventListener("click", function () {
+            let input = copyText.querySelector("input.text");
+            input.select();
+            document.execCommand("copy");
+            copyText.classList.add("active");
+            window.getSelection().removeAllRanges();
+            setTimeout(function () {
+                copyText.classList.remove("active");
+            }, 2500);
+        });
+
+        // Funkce copy to clipboard
+        function myFunction() {
+
+            var copyText = document.getElementById("myInput");
+
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile devices
+
+            navigator.clipboard.writeText(copyText.value);
+
+            alert("Prompt do AI zkopírován");
+        }
+
+    </script>
+
+</body>
+
+</html>
