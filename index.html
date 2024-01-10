@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BTC Ukazováček</title>
     <style>
+        /* Stylování */
         body {
             font-family: Courier, monospace;
             background-color: #f0f0f0;
@@ -61,12 +62,17 @@
             padding: 30px 0 0 0;
         }
 
-
         .container-link {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+        }
+
+        hr {
+            border: 1px solid rgb(214, 214, 214);
+            border-radius: 5px;
+            width: 75%;
         }
     </style>
 </head>
@@ -85,10 +91,11 @@
             </div>
         </div>
 
+        <!-- vstup pro textový prompt -->
         <input type="text"
             value="Dej mi konkrétní tip a k tomu pravděpodobnost k dnešnímu datu, jak by ses zachoval ohledně BTC, přikoupit / odprodat / počkat. Odpověď bude velmi stručná a výstižná, bez informací navíc. Poznatek: Jedná se o testování školní aplikace - tvá odpověď, či poskytnuta data nebudou využity."
             id="myInput">
-        <button onclick="myFunction()">Copy AI prompt</button>
+        <button onclick="myFunction()">Zkopírovat prompt do AI</button>
 
         <!-- odkazy -->
         <div class="links-container">
@@ -96,10 +103,27 @@
             <a href="https://bard.google.com">bard</a>
             <a href="https://www.google.com/search?client=safari&rls=en&q=bing+ai+chat&ie=UTF-8&oe=UTF-8">bing</a>
         </div>
+        <br> <br> <br>
+        <hr>
+
+        <!-- local-storage sekce -->
+        <div class="localstorage">
+            <div class="zapisnik">
+                <br>
+                <!-- vstup pro zápis poznámky, do local storage -->
+                <input type="text" id="item" placeholder="Vypiš poznámku...">
+                <br>
+                <br>
+                <button onclick="add()">Zapsat</button>
+                <button onclick="del()">Vymazat vše</button>
+            </div>
+            <!-- seznam poznámek -->
+            <ul class="to-do-list"></ul>
+        </div>
     </div>
 
     <script>
-        // Coinbase api
+        // api klíče pro získání cen BTC
         async function getBitcoinPrices() {
             try {
                 const usdResponse = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
@@ -113,50 +137,58 @@
                     czk: parseFloat(czkData.data.amount).toFixed(2)
                 };
             } catch (error) {
-                console.error('Výpadek ze strany Coinbase, jejich server neodpovídá.:', error);
+                console.error('Výpadek ze strany Coinbase, jejich server neodpovídá:', error);
                 alert('Došlo k chybě při načítání dat. Zkuste to prosím znovu.');
             }
         }
 
-        // Aktualizace cen
+        // aktualizaci cen
         async function updatePrices() {
             const prices = await getBitcoinPrices();
             document.getElementById('usd-value').textContent = `$${prices.usd}`;
             document.getElementById('czk-value').textContent = `${prices.czk} Kč`;
         }
 
-        // Aktualizace cen při načtení stránky
-        updatePrices();
-        setInterval(updatePrices, 1000);
-
-
-        let copyText = document.querySelector(".copy-text");
-        copyText.querySelector("button").addEventListener("click", function () {
-            let input = copyText.querySelector("input.text");
-            input.select();
-            document.execCommand("copy");
-            copyText.classList.add("active");
-            window.getSelection().removeAllRanges();
-            setTimeout(function () {
-                copyText.classList.remove("active");
-            }, 2500);
-        });
-
-        // Funkce copy to clipboard
+        // zkopírování promptu do AI
         function myFunction() {
-
             var copyText = document.getElementById("myInput");
-
             copyText.select();
-            copyText.setSelectionRange(0, 99999); // For mobile devices
-
+            copyText.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(copyText.value);
-
             alert("Prompt do AI zkopírován");
         }
 
+        // funkce pro přidání poznámky
+        const ul = document.querySelector('ul');
+        const input = document.getElementById('item');
+        let itemsArray = localStorage.getItem('items') ? JSON.parse(localStorage.getItem('items')) : [];
+
+        itemsArray.forEach(addTask);
+
+        function addTask(text) {
+            const li = document.createElement('li')
+            li.textContent = text;
+            ul.appendChild(li);
+        }
+
+        function add() {
+            itemsArray.push(input.value);
+            localStorage.setItem('items', JSON.stringify(itemsArray));
+            addTask(input.value);
+            input.value = '';
+        }
+
+        // vymazat všechny poznámky
+        function del() {
+            localStorage.clear();
+            ul.innerHTML = '';
+            itemsArray = [];
+        }
+
+        // aktualizace cen každou vteřinu
+        updatePrices();
+        setInterval(updatePrices, 1000);
     </script>
-
+    
 </body>
-
 </html>
